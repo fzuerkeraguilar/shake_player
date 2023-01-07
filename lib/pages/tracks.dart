@@ -88,10 +88,16 @@ class TracksState extends State<Tracks>{
                           ),
                         ),
                         onTap: () {
-                          setState(() {
-                            currentIndex = i;
-                          });
-                          key.currentState?.setSong(songs[i]);
+                          currentIndex = i;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => Player(
+                                songInfo: songs[i],
+                                changeTrack: changeTrack,
+                                currentIndex: currentIndex,
+                              ),
+                            ),
+                          );
                         },
                       );
                     }
