@@ -95,6 +95,7 @@ class TracksState extends State<Tracks>{
                                 songInfo: songs[i],
                                 changeTrack: changeTrack,
                                 currentIndex: currentIndex,
+                                key: key,
                               ),
                             ),
                           );
