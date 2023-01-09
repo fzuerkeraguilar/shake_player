@@ -10,9 +10,8 @@ class Player extends StatefulWidget {
   SongModel songInfo;
   final Function changeTrack;
   int currentIndex;
-final GlobalKey<PlayerState> key;
 
-  Player({required this.songInfo, required this.changeTrack, required this.currentIndex, required this.key});
+  Player({super.key, required this.songInfo, required this.changeTrack, required this.currentIndex});
 
   @override
   PlayerState createState() => PlayerState();
