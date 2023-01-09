@@ -1,10 +1,20 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-class BLEGyroscope{
-  bool _isConnected = false;
-  final flutterReactiveBle = FlutterReactiveBle();
+class BLEGyroscope extends StatefulWidget {
+  const BLEGyroscope({super.key});
+  @override
+  State<StatefulWidget> createState() => _BLEGyroscopeState();
+}
+
+class _BLEGyroscopeState extends State<BLEGyroscope> {
+  bool _connected = false;
+  ValueNotifier<bool> get connected => ValueNotifier(_connected);
+  final ble = FlutterReactiveBle();
   final _gyroscopeService = Uuid.parse("0000a000-1212-efde-1523-785feabcd123");
   final _gyroscopeCharacteristic = Uuid.parse("0000a001-1212-efde-1523-785feabcd123");
   final _gyroscopeConf = [0x32, 0x31, 0x39, 0x32, 0x37, 0x34, 0x31, 0x30, 0x35, 0x39, 0x35, 0x35, 0x30, 0x32, 0x34, 0x35];
@@ -14,13 +24,13 @@ class BLEGyroscope{
   int _accZ = 0;
 
   void _confGyro() async{
-    if(_isConnected){
+    if(_connected){
       final characteristic = QualifiedCharacteristic(
         serviceId: _gyroscopeService,
         characteristicId: _gyroscopeCharacteristic,
         deviceId: _device!.id,
       );
-      await flutterReactiveBle.writeCharacteristicWithResponse(characteristic, value: _gyroscopeConf);
+      await ble.writeCharacteristicWithResponse(characteristic, value: _gyroscopeConf);
     }
   }
 
@@ -31,7 +41,7 @@ class BLEGyroscope{
     _accZ = bytes[18];
   }
 
-  Stream<int> get accXStream => flutterReactiveBle.subscribeToCharacteristic(
+  Stream<int> get accXStream => ble.subscribeToCharacteristic(
     QualifiedCharacteristic(
       serviceId: _gyroscopeService,
       characteristicId: _gyroscopeCharacteristic,
@@ -42,7 +52,7 @@ class BLEGyroscope{
     return _accX;
   });
 
-  Stream<int> get accYStream => flutterReactiveBle.subscribeToCharacteristic(
+  Stream<int> get accYStream => ble.subscribeToCharacteristic(
     QualifiedCharacteristic(
       serviceId: _gyroscopeService,
       characteristicId: _gyroscopeCharacteristic,
@@ -53,7 +63,7 @@ class BLEGyroscope{
     return _accY;
   });
 
-  Stream<int> get accZStream => flutterReactiveBle.subscribeToCharacteristic(
+  Stream<int> get accZStream => ble.subscribeToCharacteristic(
     QualifiedCharacteristic(
       serviceId: _gyroscopeService,
       characteristicId: _gyroscopeCharacteristic,
@@ -77,36 +87,66 @@ class BLEGyroscope{
     }
   }
 
-  void connect() async {
-    flutterReactiveBle.scanForDevices(withServices: [_gyroscopeService]).listen((scanResult) {
-      print('Found device: ${scanResult.id}');
-      if(!_isConnected){
-        flutterReactiveBle.connectToAdvertisingDevice(id: scanResult.id,
-            withServices: [_gyroscopeService],
-            prescanDuration: const Duration(seconds: 1)).listen((connectionState) {
-          print('Connection state: $connectionState');
-          if(connectionState == DeviceConnectionState.connected){
-            _isConnected = true;
-            _device = scanResult;
-            _confGyro();
-            flutterReactiveBle.subscribeToCharacteristic(
-                QualifiedCharacteristic(
-                  serviceId: _gyroscopeService,
-                  characteristicId: _gyroscopeCharacteristic,
-                  deviceId: _device!.id,
-                )
-            ).listen((data) {
-              _updateAcc(data);
-            });
-          }
-        });
+  Future<void> connect() async {
+    if(await Permission.bluetoothScan.isDenied){
+      await Permission.bluetoothScan.request();
+    }
+    if(await Permission.bluetoothConnect.isDenied){
+      await Permission.bluetoothConnect.request();
+    }
+    ble.scanForDevices(withServices: [], scanMode: ScanMode.lowLatency).listen((scanResult) {
+      if(scanResult.name == "earconnect") {
+        if (!_connected) {
+          ble.connectToDevice(id: scanResult.id,
+              connectionTimeout: const Duration(seconds: 1)).listen((
+              connectionStateUpdate) {
+            if (kDebugMode) {
+              print('Connection state: $connectionStateUpdate');
+            }
+            if (connectionStateUpdate.connectionState ==
+                DeviceConnectionState.connected) {
+              setState(() {
+                _connected = true;
+                _device = scanResult;
+              });
+              _confGyro();
+              ble.subscribeToCharacteristic(
+                  QualifiedCharacteristic(
+                    serviceId: _gyroscopeService,
+                    characteristicId: _gyroscopeCharacteristic,
+                    deviceId: _device!.id,
+                  )
+              ).listen((data) {
+                _updateAcc(data);
+              });
+            }
+            if (connectionStateUpdate.connectionState ==
+                DeviceConnectionState.disconnected) {
+              setState(() {
+                _connected = false;
+                _device = null;
+              });
+              }
+            }
+          );
+        }
       }
     });
   }
 
-  get isConnected => _isConnected;
+  get isConnected => _connected;
   get accX => _accX;
   get accY => _accY;
   get accZ => _accZ;
 
+  @override
+  Widget build(BuildContext context) {
+    return Visibility(
+      visible: !_connected,
+        child: FloatingActionButton(
+          onPressed: connect,
+          child: const Icon(Icons.bluetooth_searching_sharp),
+        ),
+    );
+  }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shake_player/pages/player.dart';
+import 'package:shake_player/utils/ble-gyroscope.dart';
 
 class Tracks extends StatefulWidget{
   const Tracks({super.key});
@@ -15,9 +16,10 @@ class Tracks extends StatefulWidget{
 
 class TracksState extends State<Tracks>{
   final OnAudioQuery audioQuery = OnAudioQuery();
+  final BLEGyroscope bleGyroscope = BLEGyroscope();
   List<SongModel> songs = [];
   int currentIndex = 0;
-  final GlobalKey<PlayerState> key = GlobalKey<PlayerState>();
+  final GlobalKey<PlayerState> playerKey = GlobalKey<PlayerState>();
 
   @override
   void initState(){
@@ -34,13 +36,13 @@ class TracksState extends State<Tracks>{
     });
   }
 
-  void changeTrack(bool isNext){
-    if(isNext){
+  void changeTrack(bool forward){
+    if(forward){
       if(currentIndex != songs.length - 1) currentIndex++;
     }else if(currentIndex != 0) {
       currentIndex--;
     }
-    key.currentState?.setSong(songs[currentIndex]);
+    playerKey.currentState?.setSong(songs[currentIndex]);
   }
 
   @override
@@ -95,7 +97,7 @@ class TracksState extends State<Tracks>{
                                 songInfo: songs[i],
                                 changeTrack: changeTrack,
                                 currentIndex: currentIndex,
-                                key: key,
+                                key: playerKey,
                               ),
                             ),
                           );
@@ -107,7 +109,8 @@ class TracksState extends State<Tracks>{
             );
           }
         ),
-      )
+      ),
+      floatingActionButton: bleGyroscope,
     );
   }
 
