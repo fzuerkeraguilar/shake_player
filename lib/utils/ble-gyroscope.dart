@@ -1,7 +1,8 @@
 import 'dart:typed_data';
+import 'dart:math';
+import 'package:vector_math/vector_math.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:math';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -12,6 +13,7 @@ class BLEGyroscope extends StatefulWidget {
 }
 
 class _BLEGyroscopeState extends State<BLEGyroscope> {
+  final double _GRAVITY = 33;
   bool _connected = false;
   ValueNotifier<bool> get connected => ValueNotifier(_connected);
   final ble = FlutterReactiveBle();
@@ -19,6 +21,7 @@ class _BLEGyroscopeState extends State<BLEGyroscope> {
   final _gyroscopeCharacteristic = Uuid.parse("0000a001-1212-efde-1523-785feabcd123");
   final _gyroscopeConf = [0x32, 0x31, 0x39, 0x32, 0x37, 0x34, 0x31, 0x30, 0x35, 0x39, 0x35, 0x35, 0x30, 0x32, 0x34, 0x35];
   DiscoveredDevice? _device;
+  Vector3 _acc = Vector3.zero();
   int _accX = 0;
   int _accY = 0;
   int _accZ = 0;
@@ -36,56 +39,46 @@ class _BLEGyroscopeState extends State<BLEGyroscope> {
 
   void _updateAcc(rawData){
     Int8List bytes = Int8List.fromList(rawData);
+    // According to the accelerometer
     _accX = bytes[14];
     _accY = bytes[16];
     _accZ = bytes[18];
+    // +X is out the face, +Z is down, +Y is to the right
+    _accZ = _accY;
+    _accX = -_accX;
+    _accY = -_accZ;
+    _acc = Vector3(_accX.toDouble(), _accY.toDouble(), _accZ.toDouble());
   }
 
-  Stream<int> get accXStream => ble.subscribeToCharacteristic(
+  Stream<List<int>> get xyzStream => ble.subscribeToCharacteristic(
     QualifiedCharacteristic(
       serviceId: _gyroscopeService,
       characteristicId: _gyroscopeCharacteristic,
       deviceId: _device!.id,
     ),
-  ).map((event) {
-    _updateAcc(event);
-    return _accX;
+  ).map((rawData) {
+    _updateAcc(rawData);
+    return [_accX, _accY, _accZ];
   });
 
-  Stream<int> get accYStream => ble.subscribeToCharacteristic(
+  Stream<Vector3> get accStream => ble.subscribeToCharacteristic(
     QualifiedCharacteristic(
       serviceId: _gyroscopeService,
       characteristicId: _gyroscopeCharacteristic,
       deviceId: _device!.id,
     ),
-  ).map((event) {
-    _updateAcc(event);
-    return _accY;
+  ).map((rawData) {
+    _updateAcc(rawData);
+    return _acc;
   });
 
-  Stream<int> get accZStream => ble.subscribeToCharacteristic(
-    QualifiedCharacteristic(
-      serviceId: _gyroscopeService,
-      characteristicId: _gyroscopeCharacteristic,
-      deviceId: _device!.id,
-    ),
-  ).map((event) {
-    _updateAcc(event);
-    return _accZ;
-  });
+  Stream<double> get pitchStream => accStream.map(
+    (acc) => atan2(acc.x, sqrt(acc.y * acc.y + acc.z * acc.z)) * 180 / pi
+  );
 
-  Stream<bool> headShakeStream(double threshold) async*{
-    while(true){
-      int x = await accXStream.last;
-      int y = await accYStream.last;
-      int z = await accZStream.last;
-      double pitch = atan2(y, sqrt(x*x + z*z)) * 180 / pi;
-      double roll = atan2(x, sqrt(y*y + z*z)) * 180 / pi;
-      if(pitch > threshold || roll > threshold) {
-        yield true;
-      }
-    }
-  }
+  Stream<double> get rollStream => accStream.map(
+    (acc) => atan2(acc.y, sqrt(acc.x * acc.x + acc.z * acc.z)) * 180 / pi
+  );
 
   Future<void> connect() async {
     if(await Permission.bluetoothScan.isDenied){
