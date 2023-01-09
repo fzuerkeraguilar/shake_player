@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-
+import 'dart:math';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
 class BLEGyroscope{
@@ -64,6 +64,18 @@ class BLEGyroscope{
     return _accZ;
   });
 
+  Stream<bool> headShakeStream(double threshold) async*{
+    while(true){
+      int x = await accXStream.last;
+      int y = await accYStream.last;
+      int z = await accZStream.last;
+      double pitch = atan2(y, sqrt(x*x + z*z)) * 180 / pi;
+      double roll = atan2(x, sqrt(y*y + z*z)) * 180 / pi;
+      if(pitch > threshold || roll > threshold) {
+        yield true;
+      }
+    }
+  }
 
   void connect() async {
     flutterReactiveBle.scanForDevices(withServices: [_gyroscopeService]).listen((scanResult) {
