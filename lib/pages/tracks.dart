@@ -16,7 +16,7 @@ class Tracks extends StatefulWidget{
 
 class TracksState extends State<Tracks>{
   final OnAudioQuery audioQuery = OnAudioQuery();
-  final BLEGyroscope bleGyroscope = BLEGyroscope();
+  final BLEGyroscope bleGyroscope = const BLEGyroscope();
   List<SongModel> songs = [];
   int currentIndex = 0;
   final GlobalKey<PlayerState> playerKey = GlobalKey<PlayerState>();
@@ -94,9 +94,9 @@ class TracksState extends State<Tracks>{
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => Player(
-                                songInfo: songs[i],
-                                changeTrack: changeTrack,
-                                currentIndex: currentIndex,
+                                initSongInfo: songs[i],
+                                initChangeTrack: changeTrack,
+                                initIndex: currentIndex,
                                 key: playerKey,
                               ),
                             ),

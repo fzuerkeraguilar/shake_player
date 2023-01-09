@@ -3,15 +3,14 @@ import "package:flutter/material.dart";
 import 'package:just_audio/just_audio.dart';
 import "package:on_audio_query/on_audio_query.dart";
 import 'package:google_fonts/google_fonts.dart';
-import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 
 
 class Player extends StatefulWidget {
-  SongModel songInfo;
-  final Function changeTrack;
-  int currentIndex;
+  final SongModel initSongInfo;
+  final Function initChangeTrack;
+  final int initIndex;
 
-  Player({super.key, required this.songInfo, required this.changeTrack, required this.currentIndex});
+  const Player({super.key, required this.initSongInfo, required this.initChangeTrack, required this.initIndex});
 
   @override
   PlayerState createState() => PlayerState();
@@ -20,13 +19,17 @@ class Player extends StatefulWidget {
 class PlayerState extends State<Player> {
   final OnAudioQuery audioQuery = OnAudioQuery();
   final AudioPlayer audioPlayer = AudioPlayer();
+  late SongModel songInfo;
+  late int currentIndex;
   bool isPlaying = false;
   bool loop = false;
 
   @override
   void initState() {
     super.initState();
-    setSong(widget.songInfo);
+    songInfo = widget.initSongInfo;
+    currentIndex = widget.initIndex;
+    setSong(widget.initSongInfo);
   }
 
   @override
@@ -41,7 +44,7 @@ class PlayerState extends State<Player> {
     }
     await audioPlayer.setUrl(songInfo.uri ?? "");
     setState(() {
-      widget.songInfo = songInfo;
+      this.songInfo = songInfo;
     });
   }
 
@@ -50,7 +53,7 @@ class PlayerState extends State<Player> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.songInfo.title,
+          songInfo.title,
           style: GoogleFonts.poppins(
             textStyle: const TextStyle(
               color: Colors.black,
@@ -83,7 +86,7 @@ class PlayerState extends State<Player> {
             height: 20,
           ),
           Text(
-            widget.songInfo.title,
+            songInfo.title,
             style: GoogleFonts.poppins(
               textStyle: const TextStyle(
                 color: Colors.black,
@@ -95,7 +98,7 @@ class PlayerState extends State<Player> {
             height: 10,
           ),
           Text(
-            widget.songInfo.artist ?? "Unknown Artist",
+            songInfo.artist ?? "Unknown Artist",
             style: GoogleFonts.poppins(
               textStyle: const TextStyle(
                 color: Colors.black,
@@ -111,7 +114,7 @@ class PlayerState extends State<Player> {
             children: [
               IconButton(
                 onPressed: () {
-                  widget.changeTrack(false);
+                  widget.initChangeTrack(false);
                 },
                 icon: const Icon(
                   Icons.skip_previous,
@@ -136,7 +139,7 @@ class PlayerState extends State<Player> {
               ),
               IconButton(
                 onPressed: () {
-                  widget.changeTrack(true);
+                  widget.initChangeTrack(true);
                 },
                 icon: const Icon(
                   Icons.skip_next,
