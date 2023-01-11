@@ -125,26 +125,30 @@ class PlayerState extends State<Player> {
           const SizedBox(
             height: 20,
           ),
-          Text(
-            songInfo.title,
-            style: GoogleFonts.poppins(
-              textStyle: const TextStyle(
-                color: Colors.black,
-                fontSize: 20,
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              songInfo.title,
+              style: GoogleFonts.poppins(
+                textStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                ),
               ),
-            ),
+            )
           ),
           const SizedBox(
             height: 10,
           ),
-          Text(
-            songInfo.artist ?? "Unknown Artist",
-            style: GoogleFonts.poppins(
-              textStyle: const TextStyle(
-                color: Colors.black,
-                fontSize: 15,
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
+            child:Text(
+              songInfo.artist ?? "Unknown Artist",
+              style: GoogleFonts.poppins(
+                textStyle: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 15,
+                ),
               ),
-            ),
+            )
           ),
           const SizedBox(
             height: 20,
