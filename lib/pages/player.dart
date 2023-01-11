@@ -9,8 +9,9 @@ class Player extends StatefulWidget {
   final SongModel initSongInfo;
   final Function initChangeTrack;
   final int initIndex;
+  final Stream<bool> shakeStream;
 
-  const Player({super.key, required this.initSongInfo, required this.initChangeTrack, required this.initIndex});
+  const Player({super.key, required this.initSongInfo, required this.initChangeTrack, required this.initIndex, required this.shakeStream});
 
   @override
   PlayerState createState() => PlayerState();
@@ -30,6 +31,11 @@ class PlayerState extends State<Player> {
     songInfo = widget.initSongInfo;
     currentIndex = widget.initIndex;
     setSong(widget.initSongInfo);
+    widget.shakeStream.listen((event) {
+      if(event){
+        togglePlayPause();
+      }
+    });
   }
 
   @override
@@ -45,6 +51,17 @@ class PlayerState extends State<Player> {
     await audioPlayer.setUrl(songInfo.uri ?? "");
     setState(() {
       this.songInfo = songInfo;
+    });
+  }
+
+  void togglePlayPause() {
+    if (isPlaying) {
+      audioPlayer.pause();
+    } else {
+      audioPlayer.play();
+    }
+    setState(() {
+      isPlaying = !isPlaying;
     });
   }
 
@@ -122,16 +139,7 @@ class PlayerState extends State<Player> {
                 ),
               ),
               IconButton(
-                onPressed: () {
-                  if (isPlaying) {
-                    audioPlayer.pause();
-                  } else {
-                    audioPlayer.play();
-                  }
-                  setState(() {
-                    isPlaying = !isPlaying;
-                  });
-                },
+                onPressed: togglePlayPause,
                 icon: Icon(
                   isPlaying ? Icons.pause : Icons.play_arrow,
                   color: Colors.black,

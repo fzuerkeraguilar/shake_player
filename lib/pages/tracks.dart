@@ -16,10 +16,12 @@ class Tracks extends StatefulWidget{
 
 class TracksState extends State<Tracks>{
   final OnAudioQuery audioQuery = OnAudioQuery();
-  final BLEGyroscope bleGyroscope = const BLEGyroscope();
+  GlobalKey<BLEGyroscopeState> bleGyroscopeKey = GlobalKey<BLEGyroscopeState>();
+  late BLEGyroscope bleGyroscope = BLEGyroscope(key: bleGyroscopeKey);
   List<SongModel> songs = [];
   int currentIndex = 0;
   final GlobalKey<PlayerState> playerKey = GlobalKey<PlayerState>();
+
 
   @override
   void initState(){
@@ -98,6 +100,7 @@ class TracksState extends State<Tracks>{
                                 initChangeTrack: changeTrack,
                                 initIndex: currentIndex,
                                 key: playerKey,
+                                shakeStream: bleGyroscopeKey.currentState?.simpleShakeStream(35, 1000) ?? const Stream.empty(),
                               ),
                             ),
                           );
