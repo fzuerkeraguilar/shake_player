@@ -1,3 +1,4 @@
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/foundation.dart';
 import "package:flutter/material.dart";
 import 'package:just_audio/just_audio.dart';
@@ -7,11 +8,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 class Player extends StatefulWidget {
   final SongModel initSongInfo;
-  final Function initChangeTrack;
+  final Function changeTrack;
   final int initIndex;
   final Stream<bool> shakeStream;
 
-  const Player({super.key, required this.initSongInfo, required this.initChangeTrack, required this.initIndex, required this.shakeStream});
+  const Player({super.key, required this.initSongInfo, required this.changeTrack, required this.initIndex, required this.shakeStream});
 
   @override
   PlayerState createState() => PlayerState();
@@ -148,12 +149,16 @@ class PlayerState extends State<Player> {
           const SizedBox(
             height: 20,
           ),
+          AudioProgressBar(audioPlayer: audioPlayer),
+          const SizedBox(
+            height: 20,
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
                 onPressed: () {
-                  widget.initChangeTrack(false);
+                  widget.changeTrack(false);
                 },
                 icon: const Icon(
                   Icons.skip_previous,
@@ -169,7 +174,7 @@ class PlayerState extends State<Player> {
               ),
               IconButton(
                 onPressed: () {
-                  widget.initChangeTrack(true);
+                  widget.changeTrack(true);
                 },
                 icon: const Icon(
                   Icons.skip_next,
@@ -203,6 +208,65 @@ class PlayerState extends State<Player> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class AudioProgressBar extends StatelessWidget {
+  const AudioProgressBar({
+    Key? key,
+    required this.audioPlayer,
+  }) : super(key: key);
+
+  final AudioPlayer audioPlayer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
+      child:StreamBuilder<Duration?>(
+        stream: audioPlayer.durationStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            var duration = snapshot.data!;
+            return StreamBuilder<Duration>(
+              stream: audioPlayer.positionStream,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  var position = snapshot.data!;
+                  return StreamBuilder<Duration>(
+                    stream: audioPlayer.bufferedPositionStream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        var bufferedPosition = snapshot.data!;
+                        return ProgressBar(
+                          progress: position,
+                          buffered: bufferedPosition,
+                          total: duration,
+                          onSeek: (duration) {
+                            audioPlayer.seek(duration);
+                          },
+                        );
+                      } else {
+                        return ProgressBar(
+                          progress: position,
+                          total: duration,
+                          onSeek: (value) {
+                          audioPlayer.seek(value);
+                          }
+                        );
+                      }
+                    },
+                  );
+                } else {
+                  return const ProgressBar(progress: Duration.zero, total: Duration.zero);
+                }
+              },
+            );
+          } else {
+            return const ProgressBar(progress: Duration.zero, total: Duration.zero);
+          }
+        },
+      )
     );
   }
 }

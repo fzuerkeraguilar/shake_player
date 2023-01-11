@@ -97,7 +97,7 @@ class TracksState extends State<Tracks>{
                             MaterialPageRoute(
                               builder: (context) => Player(
                                 initSongInfo: songs[i],
-                                initChangeTrack: changeTrack,
+                                changeTrack: changeTrack,
                                 initIndex: currentIndex,
                                 key: playerKey,
                                 shakeStream: bleGyroscopeKey.currentState?.simpleShakeStream(35, 1000) ?? const Stream.empty(),
