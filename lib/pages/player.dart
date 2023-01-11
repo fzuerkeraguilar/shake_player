@@ -65,6 +65,39 @@ class PlayerState extends State<Player> {
     });
   }
 
+  FutureBuilder<Uint8List?> _extractArtwork(SongModel songInfo) {
+    return FutureBuilder(
+      future: audioQuery.queryArtwork(songInfo.id, ArtworkType.AUDIO),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: Image.memory(snapshot.data!).image,
+                fit: BoxFit.cover,
+              ),
+            ),
+          );
+        } else {
+          return Container(
+            width: 200,
+            height: 200,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              image: DecorationImage(
+                image: AssetImage('assets/images/icon.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          );
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,18 +119,7 @@ class PlayerState extends State<Player> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Center(
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                image: DecorationImage(
-                  //TODO: Add album artwork
-                  image: AssetImage('assets/images/icon.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+            child: _extractArtwork(songInfo),
           ),
           const SizedBox(
             height: 20,
