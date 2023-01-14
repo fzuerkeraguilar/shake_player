@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:esense_flutter/esense.dart';
 
 class BLEGyroscope extends StatefulWidget {
   const BLEGyroscope({super.key});
@@ -17,6 +18,7 @@ class BLEGyroscope extends StatefulWidget {
 class BLEGyroscopeState extends State<BLEGyroscope> {
   bool _connected = false;
   final ble = FlutterReactiveBle();
+  final esense = ESenseManager('eSense-0332');
   final _gyroscopeService = Uuid.parse("0000a000-1212-efde-1523-785feabcd123");
   final _gyroscopeCharacteristic =
       Uuid.parse("0000a001-1212-efde-1523-785feabcd123");
@@ -53,9 +55,22 @@ class BLEGyroscopeState extends State<BLEGyroscope> {
         characteristicId: _gyroscopeCharacteristic,
         deviceId: _device!.id,
       );
-      await ble.writeCharacteristicWithResponse(characteristic,
+      await ble.writeCharacteristicWithoutResponse(characteristic,
           value: _gyroscopeConf);
     }
+  }
+
+  void _setupESense(){
+    _gyroscopeStream = esense.sensorEvents.map((event) {
+      List<int> data = [18];
+      var x = event.accel![0] * 33;
+      var y = event.accel![1] * 33;
+      var z = event.accel![2] * 33;
+      data[14] = x;
+      data[16] = y;
+      data[18] = z;
+      return data;
+    });
   }
 
   Vector3 _extractAcc(List<int> rawData) {
@@ -113,6 +128,25 @@ class BLEGyroscopeState extends State<BLEGyroscope> {
     }
     if (await Permission.bluetoothConnect.isDenied) {
       await Permission.bluetoothConnect.request();
+    }
+    esense.connectionEvents.listen((event) {
+      if (event.type == ConnectionType.connected) {
+        setState(() {
+          _connected = true;
+        });
+        _setupESense();
+      } else if (event.type == ConnectionType.disconnected) {
+        setState(() {
+          _connected = false;
+        });
+        _gyroscopeStream = const Stream.empty();
+      } else if (event.type == ConnectionType.device_found) {
+        esense.connect();
+      }
+    });
+    await esense.connect();
+    if (_connected) {
+      return;
     }
     ble.scanForDevices(withServices: [], scanMode: ScanMode.lowLatency).listen(
         (scanResult) {

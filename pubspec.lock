@@ -85,6 +85,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.5"
+  esense_flutter:
+    dependency: "direct main"
+    description:
+      name: esense_flutter
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.6.2"
   fake_async:
     dependency: transitive
     description:
