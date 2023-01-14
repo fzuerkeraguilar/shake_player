@@ -37,6 +37,15 @@ class PlayerState extends State<Player> {
     songInfo = widget.initSongInfo;
     currentIndex = widget.initIndex;
     setSong(widget.initSongInfo);
+    audioPlayer.durationStream.listen((duration) {
+      if (duration != null) {
+        audioPlayer.positionStream.listen((position) {
+          if (position >= duration) {
+            widget.changeTrack(true);
+          }
+        });
+      }
+    });
     widget.shakeStream.listen((event) {
       if (event) {
         togglePlayPause();
