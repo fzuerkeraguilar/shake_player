@@ -8,5 +8,5 @@ at the technical university of Karlsruhe (KIT).
 
 The main functionality of this project is to provide a music player that can be controlled
 with the movement of your head. The player has support to connect to the cosinuss earables.
-The player also has experimental support for the eSense earables.
+The player also has experimental (untested) support for the eSense earables.
 Currently only cosinuss is supported.
