@@ -29,12 +29,13 @@ class TracksState extends State<Tracks> {
   }
 
   void getTracks() async {
-    await audioQuery.permissionsRequest();
-    audioQuery.querySongs().then((value) {
-      setState(() {
-        songs = value;
+    if(await audioQuery.permissionsRequest()){
+      audioQuery.querySongs().then((value) {
+        setState(() {
+          songs = value;
+        });
       });
-    });
+    }
   }
 
   void changeTrack(bool forward) {

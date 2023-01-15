@@ -124,10 +124,14 @@ class BLEGyroscopeState extends State<BLEGyroscope> {
 
   Future<void> connect() async {
     if (await Permission.bluetoothScan.isDenied) {
-      await Permission.bluetoothScan.request();
+      if(await Permission.bluetoothScan.request().isDenied) {
+        return;
+      }
     }
     if (await Permission.bluetoothConnect.isDenied) {
-      await Permission.bluetoothConnect.request();
+      if(await Permission.bluetoothConnect.request().isDenied) {
+        return;
+      }
     }
     esense.connectionEvents.listen((event) {
       if (event.type == ConnectionType.connected) {
